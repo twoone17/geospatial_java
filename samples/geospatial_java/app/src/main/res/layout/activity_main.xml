@@ -46,6 +46,20 @@
       android:background="#bf323232"/>
 
   <Button
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:id="@+id/set_location"
+      android:text="Set location "/>
+
+  <TextView
+      android:id="@+id/stored_location"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="저장된 위치"
+      android:layout_alignParentRight="true"
+      android:textSize="30dp"/>
+
+  <Button
       android:id="@+id/set_anchor_button"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"

@@ -131,7 +131,7 @@ public class GeospatialActivity extends AppCompatActivity
   }
 
   private State state = State.UNINITIALIZED;
-
+  private StoredGeolocation storedGeolocation;
   private Session session;
   private final SnackbarHelper messageSnackbarHelper = new SnackbarHelper();
   private DisplayRotationHelper displayRotationHelper;
@@ -144,6 +144,10 @@ public class GeospatialActivity extends AppCompatActivity
   private TextView statusTextView;
   private Button setAnchorButton;
   private Button clearAnchorsButton;
+  //추가
+  private Button setLocationButton;
+  private TextView stroedLocationTextView;
+  private double location;
 
   private BackgroundRenderer backgroundRenderer;
   private Framebuffer virtualSceneFramebuffer;
@@ -173,6 +177,8 @@ public class GeospatialActivity extends AppCompatActivity
     statusTextView = findViewById(R.id.status_text_view);
     setAnchorButton = findViewById(R.id.set_anchor_button);
     clearAnchorsButton = findViewById(R.id.clear_anchors_button);
+    //눌렀을때 위치 저장
+//    setLocationButton = findViewById(R.id.set_location);
 
     setAnchorButton.setOnClickListener(view -> handleSetAnchorButton());
     clearAnchorsButton.setOnClickListener(view -> handleClearAnchorsButton());
@@ -439,55 +445,74 @@ public class GeospatialActivity extends AppCompatActivity
     if (earth != null) {
       updateGeospatialState(earth);
     }
+    setLocationButton = findViewById(R.id.set_location);
+    stroedLocationTextView = findViewById(R.id.stored_location);
+    GeospatialPose geospatialPose = earth.getCameraGeospatialPose();
 
-    // Show a message based on whether tracking has failed, if planes are detected, and if the user
-    // has placed any objects.
-    String message = null;
-    switch (state) {
-      case UNINITIALIZED:
-        break;
-      case UNSUPPORTED:
-        message = getResources().getString(R.string.status_unsupported);
-        break;
-      case PRETRACKING:
-        message = getResources().getString(R.string.status_pretracking);
-        break;
-      case EARTH_STATE_ERROR:
-        message = getResources().getString(R.string.status_earth_state_error);
-        break;
-      case LOCALIZING:
-        message = getResources().getString(R.string.status_localize_hint);
-        break;
-      case LOCALIZING_FAILED:
-        message = getResources().getString(R.string.status_localize_timeout);
-        break;
-      case LOCALIZED:
-        if (anchors.size() > 0) {
-          message =
-              getResources()
-                  .getQuantityString(R.plurals.status_anchors_set, anchors.size(), anchors.size());
+    setLocationButton.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+         storedGeolocation = new StoredGeolocation(geospatialPose.getLatitude(),
+                 geospatialPose.getLongitude(),
+                 geospatialPose.getHorizontalAccuracy(),
+                 geospatialPose.getAltitude(),
+                 geospatialPose.getVerticalAccuracy(),
+                 geospatialPose.getHeading(),
+                 geospatialPose.getHeadingAccuracy());
 
-        } else if (clearedAnchorsAmount != null) {
-          message =
-              getResources()
-                  .getQuantityString(
-                      R.plurals.status_anchors_cleared, clearedAnchorsAmount, clearedAnchorsAmount);
-        } else {
-          message = getResources().getString(R.string.status_localize_complete);
-        }
-        break;
-    }
-    if (message == null) {
-      lastStatusText = null;
-      runOnUiThread(() -> statusTextView.setVisibility(View.INVISIBLE));
-    } else if (lastStatusText != message) {
-      lastStatusText = message;
-      runOnUiThread(
-          () -> {
-            statusTextView.setVisibility(View.VISIBLE);
-            statusTextView.setText(lastStatusText);
-          });
-    }
+        stroedLocationTextView.setText(storedGeolocation.toString());
+      }
+    });
+
+
+//    // Show a message based on whether tracking has failed, if planes are detected, and if the user
+//    // has placed any objects.
+//    String message = null;
+//    switch (state) {
+//      case UNINITIALIZED:
+//        break;
+//      case UNSUPPORTED:
+//        message = getResources().getString(R.string.status_unsupported);
+//        break;
+//      case PRETRACKING:
+//        message = getResources().getString(R.string.status_pretracking);
+//        break;
+//      case EARTH_STATE_ERROR:
+//        message = getResources().getString(R.string.status_earth_state_error);
+//        break;
+//      case LOCALIZING:
+//        message = getResources().getString(R.string.status_localize_hint);
+//        break;
+//      case LOCALIZING_FAILED:
+//        message = getResources().getString(R.string.status_localize_timeout);
+//        break;
+//      case LOCALIZED:
+//        if (anchors.size() > 0) {
+//          message =
+//              getResources()
+//                  .getQuantityString(R.plurals.status_anchors_set, anchors.size(), anchors.size());
+//
+//        } else if (clearedAnchorsAmount != null) {
+//          message =
+//              getResources()
+//                  .getQuantityString(
+//                      R.plurals.status_anchors_cleared, clearedAnchorsAmount, clearedAnchorsAmount);
+//        } else {
+//          message = getResources().getString(R.string.status_localize_complete);
+//        }
+//        break;
+//    }
+//    if (message == null) {
+//      lastStatusText = null;
+//      runOnUiThread(() -> statusTextView.setVisibility(View.INVISIBLE));
+//    } else if (lastStatusText != message) {
+//      lastStatusText = message;
+//      runOnUiThread(
+//          () -> {
+//            statusTextView.setVisibility(View.VISIBLE);
+//            statusTextView.setText(lastStatusText);
+//          });
+//    }
 
     // -- Draw background
 
@@ -503,32 +528,32 @@ public class GeospatialActivity extends AppCompatActivity
     }
 
     // -- Draw virtual objects
-
-    // Get projection matrix.
-    camera.getProjectionMatrix(projectionMatrix, 0, Z_NEAR, Z_FAR);
-
-    // Get camera matrix and draw.
-    camera.getViewMatrix(viewMatrix, 0);
-
-    // Visualize anchors created by touch.
-    render.clear(virtualSceneFramebuffer, 0f, 0f, 0f, 0f);
-    for (Anchor anchor : anchors) {
-      // Get the current pose of an Anchor in world space. The Anchor pose is updated
-      // during calls to session.update() as ARCore refines its estimate of the world.
-      anchor.getPose().toMatrix(modelMatrix, 0);
-
-      // Calculate model/view/projection matrices
-      Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0);
-      Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0);
-
-      // Update shader properties and draw
-      virtualObjectShader.setMat4("u_ModelViewProjection", modelViewProjectionMatrix);
-
-      render.draw(virtualObjectMesh, virtualObjectShader, virtualSceneFramebuffer);
-    }
-
-    // Compose the virtual scene with the background.
-    backgroundRenderer.drawVirtualScene(render, virtualSceneFramebuffer, Z_NEAR, Z_FAR);
+//
+//    // Get projection matrix.
+//    camera.getProjectionMatrix(projectionMatrix, 0, Z_NEAR, Z_FAR);
+//
+//    // Get camera matrix and draw.
+//    camera.getViewMatrix(viewMatrix, 0);
+//
+//    // Visualize anchors created by touch.
+//    render.clear(virtualSceneFramebuffer, 0f, 0f, 0f, 0f);
+//    for (Anchor anchor : anchors) {
+//      // Get the current pose of an Anchor in world space. The Anchor pose is updated
+//      // during calls to session.update() as ARCore refines its estimate of the world.
+//      anchor.getPose().toMatrix(modelMatrix, 0);
+//
+//      // Calculate model/view/projection matrices
+//      Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0);
+//      Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0);
+//
+//      // Update shader properties and draw
+//      virtualObjectShader.setMat4("u_ModelViewProjection", modelViewProjectionMatrix);
+//
+//      render.draw(virtualObjectMesh, virtualObjectShader, virtualSceneFramebuffer);
+//    }
+//
+//    // Compose the virtual scene with the background.
+//    backgroundRenderer.drawVirtualScene(render, virtualSceneFramebuffer, Z_NEAR, Z_FAR);
   }
 
   /** Configures the session with feature settings. */

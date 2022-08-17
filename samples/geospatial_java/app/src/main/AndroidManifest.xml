@@ -53,8 +53,9 @@
     </activity>
     <!-- Indicates whether "Google Play Services for AR" (ARCore) is "required" or "optional". -->
     <meta-data android:name="com.google.ar.core" android:value="required" />
+
     <meta-data
         android:name="com.google.android.ar.API_KEY"
-        android:value="AIzaSyBI7uC41WCZgNLp295yUSR3bS0eH6FG-T0"/>
+        android:value="AIzaSyB1CL1sEiRBxo9ul2COQXRzQvMgh2x2ywg"/>
   </application>
 </manifest>
