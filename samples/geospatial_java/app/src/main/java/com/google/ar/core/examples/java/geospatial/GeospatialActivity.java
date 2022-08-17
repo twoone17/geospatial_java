@@ -449,6 +449,7 @@ public class GeospatialActivity extends AppCompatActivity
     stroedLocationTextView = findViewById(R.id.stored_location);
     GeospatialPose geospatialPose = earth.getCameraGeospatialPose();
 
+    //TODO: 여기선 버튼이지만 추후에 촬영시 저장되는 형식으로 변경
     setLocationButton.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
@@ -460,61 +461,66 @@ public class GeospatialActivity extends AppCompatActivity
                  geospatialPose.getHeading(),
                  geospatialPose.getHeadingAccuracy());
 
+
         stroedLocationTextView.setText(storedGeolocation.toString());
+        handleSetAnchorButton();
       }
     });
 
 
-//    // Show a message based on whether tracking has failed, if planes are detected, and if the user
-//    // has placed any objects.
-//    String message = null;
-//    switch (state) {
-//      case UNINITIALIZED:
-//        break;
-//      case UNSUPPORTED:
-//        message = getResources().getString(R.string.status_unsupported);
-//        break;
-//      case PRETRACKING:
-//        message = getResources().getString(R.string.status_pretracking);
-//        break;
-//      case EARTH_STATE_ERROR:
-//        message = getResources().getString(R.string.status_earth_state_error);
-//        break;
-//      case LOCALIZING:
-//        message = getResources().getString(R.string.status_localize_hint);
-//        break;
-//      case LOCALIZING_FAILED:
-//        message = getResources().getString(R.string.status_localize_timeout);
-//        break;
-//      case LOCALIZED:
-//        if (anchors.size() > 0) {
-//          message =
-//              getResources()
-//                  .getQuantityString(R.plurals.status_anchors_set, anchors.size(), anchors.size());
-//
-//        } else if (clearedAnchorsAmount != null) {
-//          message =
-//              getResources()
-//                  .getQuantityString(
-//                      R.plurals.status_anchors_cleared, clearedAnchorsAmount, clearedAnchorsAmount);
-//        } else {
-//          message = getResources().getString(R.string.status_localize_complete);
-//        }
-//        break;
-//    }
-//    if (message == null) {
-//      lastStatusText = null;
-//      runOnUiThread(() -> statusTextView.setVisibility(View.INVISIBLE));
-//    } else if (lastStatusText != message) {
-//      lastStatusText = message;
-//      runOnUiThread(
-//          () -> {
-//            statusTextView.setVisibility(View.VISIBLE);
-//            statusTextView.setText(lastStatusText);
-//          });
-//    }
+    // Show a message based on whether tracking has failed, if planes are detected, and if the user
+    // has placed any objects.
+    String message = null;
+    switch (state) {
+      case UNINITIALIZED:
+        break;
+      case UNSUPPORTED:
+        message = getResources().getString(R.string.status_unsupported);
+        break;
+      case PRETRACKING:
+        message = getResources().getString(R.string.status_pretracking);
+        break;
+      case EARTH_STATE_ERROR:
+        message = getResources().getString(R.string.status_earth_state_error);
+        break;
+      case LOCALIZING:
+        message = getResources().getString(R.string.status_localize_hint);
+        break;
+      case LOCALIZING_FAILED:
+        message = getResources().getString(R.string.status_localize_timeout);
+        break;
+      case LOCALIZED:
+        if (anchors.size() > 0) {
+          message =
+              getResources()
+                  .getQuantityString(R.plurals.status_anchors_set, anchors.size(), anchors.size());
+
+        } else if (clearedAnchorsAmount != null) {
+          message =
+              getResources()
+                  .getQuantityString(
+                      R.plurals.status_anchors_cleared, clearedAnchorsAmount, clearedAnchorsAmount);
+        } else {
+          message = getResources().getString(R.string.status_localize_complete);
+        }
+        break;
+    }
+    if (message == null) {
+      lastStatusText = null;
+      runOnUiThread(() -> statusTextView.setVisibility(View.INVISIBLE));
+    } else if (lastStatusText != message) {
+      lastStatusText = message;
+      runOnUiThread(
+          () -> {
+            statusTextView.setVisibility(View.VISIBLE);
+            statusTextView.setText(lastStatusText);
+          });
+    }
 
     // -- Draw background
+    /**
+     * 보여지는 것
+     */
 
     if (frame.getTimestamp() != 0) {
       // Suppress rendering if the camera did not produce the first frame yet. This is to avoid
@@ -523,37 +529,37 @@ public class GeospatialActivity extends AppCompatActivity
     }
 
     // If not tracking, don't draw 3D objects.
-    if (camera.getTrackingState() != TrackingState.TRACKING || state != State.LOCALIZED) {
-      return;
-    }
+//    if (camera.getTrackingState() != TrackingState.TRACKING || state != State.LOCALIZED) {
+//      return;
+//    }
 
     // -- Draw virtual objects
-//
-//    // Get projection matrix.
-//    camera.getProjectionMatrix(projectionMatrix, 0, Z_NEAR, Z_FAR);
-//
-//    // Get camera matrix and draw.
-//    camera.getViewMatrix(viewMatrix, 0);
-//
-//    // Visualize anchors created by touch.
-//    render.clear(virtualSceneFramebuffer, 0f, 0f, 0f, 0f);
-//    for (Anchor anchor : anchors) {
-//      // Get the current pose of an Anchor in world space. The Anchor pose is updated
-//      // during calls to session.update() as ARCore refines its estimate of the world.
-//      anchor.getPose().toMatrix(modelMatrix, 0);
-//
-//      // Calculate model/view/projection matrices
-//      Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0);
-//      Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0);
-//
-//      // Update shader properties and draw
-//      virtualObjectShader.setMat4("u_ModelViewProjection", modelViewProjectionMatrix);
-//
-//      render.draw(virtualObjectMesh, virtualObjectShader, virtualSceneFramebuffer);
-//    }
-//
-//    // Compose the virtual scene with the background.
-//    backgroundRenderer.drawVirtualScene(render, virtualSceneFramebuffer, Z_NEAR, Z_FAR);
+
+    // Get projection matrix.
+    camera.getProjectionMatrix(projectionMatrix, 0, Z_NEAR, Z_FAR);
+
+    // Get camera matrix and draw.
+    camera.getViewMatrix(viewMatrix, 0);
+
+    // Visualize anchors created by touch.
+    render.clear(virtualSceneFramebuffer, 0f, 0f, 0f, 0f);
+    for (Anchor anchor : anchors) {
+      // Get the current pose of an Anchor in world space. The Anchor pose is updated
+      // during calls to session.update() as ARCore refines its estimate of the world.
+      anchor.getPose().toMatrix(modelMatrix, 0);
+
+      // Calculate model/view/projection matrices
+      Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0);
+      Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0);
+
+      // Update shader properties and draw
+      virtualObjectShader.setMat4("u_ModelViewProjection", modelViewProjectionMatrix);
+
+      render.draw(virtualObjectMesh, virtualObjectShader, virtualSceneFramebuffer);
+    }
+
+    // Compose the virtual scene with the background.
+    backgroundRenderer.drawVirtualScene(render, virtualSceneFramebuffer, Z_NEAR, Z_FAR);
   }
 
   /** Configures the session with feature settings. */
