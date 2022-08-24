@@ -70,13 +70,17 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -466,6 +470,7 @@ public class GeospatialActivity extends AppCompatActivity
     GeospatialPose geospatialPose = earth.getCameraGeospatialPose();
 
     //TODO: 여기선 버튼이지만 추후에 촬영시 저장되는 형식으로 변경
+
     setLocationButton.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
@@ -479,6 +484,51 @@ public class GeospatialActivity extends AppCompatActivity
 
         stroedLocationTextView.setText(storedGeolocation.toString());
         handleSetAnchorButton();
+
+        //기존 저장한 앵커를 파이어베이스에서 불러온다
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collectionGroup("anchor").get().
+                addOnCompleteListener(task -> {
+                  if(task.isSuccessful()) {
+
+                    for(QueryDocumentSnapshot document : task.getResult()) {
+                      AnchorFirebase anchorFirebase = document.toObject(AnchorFirebase.class);
+                      Anchor anchor =
+                              earth.createAnchor(
+                                      anchorFirebase.getLatitude(),
+                                      anchorFirebase.getLongitude(),
+                                      anchorFirebase.getAltitude(),
+                                      0.0f,
+                                      (float) Math.sin(anchorFirebase.getAngleRadians()/ 2),
+                                      0.0f,
+                                      (float) Math.cos(anchorFirebase.getAngleRadians() / 2));
+                      anchors.add(anchor);
+                    }
+
+                  }
+
+
+                });
+
+//        DocumentReference docRef = db.collection("anchor").document("anchor");
+//        docRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+//          @Override
+//          public void onSuccess(DocumentSnapshot documentSnapshot) {
+//            AnchorFirebase anchorFirebase = documentSnapshot.toObject(AnchorFirebase.class);
+//            Anchor anchor =
+//                    earth.createAnchor(
+//                            anchorFirebase.getLatitude(),
+//                            anchorFirebase.getLongitude(),
+//                            anchorFirebase.getAltitude(),
+//                            0.0f,
+//                            (float) Math.sin(anchorFirebase.getAngleRadians()/ 2),
+//                            0.0f,
+//                            (float) Math.cos(anchorFirebase.getAngleRadians() / 2));
+//            anchors.add(anchor);
+//          }
+//        });
+
       }
     });
 
@@ -585,28 +635,10 @@ public class GeospatialActivity extends AppCompatActivity
     /**
      * firebase에서 anchor를 받아오면 띄울수 있지 않을까?
      */
-//    FirebaseFirestore db = FirebaseFirestore.getInstance();
-//    DocumentReference docRef = db.collection("anchor").document("anchor");
-//    docRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-//      @Override
-//      public void onSuccess(DocumentSnapshot documentSnapshot) {
-//        AnchorFirebase anchorFirebase = documentSnapshot.toObject(AnchorFirebase.class);
-//        Anchor anchor =
-//                earth.createAnchor(
-//                        anchorFirebase.getLatitude(),
-//                        anchorFirebase.getLongitude(),
-//                        anchorFirebase.getAltitude(),
-//                        0.0f,
-//                        (float) Math.sin(anchorFirebase.getAngleRadians()/ 2),
-//                        0.0f,
-//                        (float) Math.cos(anchorFirebase.getAngleRadians() / 2));
-//        anchors.add(anchor);
-//      }
-//    });
-//    List<Anchor> anchors = new ArrayList<>();
+
 
     Iterator<Anchor> iterator = anchors.iterator();
-
+    System.out.println("anchors.size() = " + anchors.size());
     for (Anchor anchor : anchors){
 //    while(iterator.hasNext()){
 //      Anchor anchor = iterator.next();
@@ -789,9 +821,12 @@ public class GeospatialActivity extends AppCompatActivity
       Earth earth, double latitude, double longitude, double altitude, double headingDegrees) {
     // Convert a heading to a EUS quaternion:
     double angleRadians = Math.toRadians(180.0f - headingDegrees);
+    LocalDateTime now = LocalDateTime.now();
+    String AnchorDate = now.format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss", Locale.ENGLISH));
+    //현재 위치의 앵커를 파이어베이스에 저장한다
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     AnchorFirebase anchorFirebase = new AnchorFirebase(latitude,longitude,altitude,angleRadians);
-    db.collection("anchor").document("anchor").set(anchorFirebase);
+    db.collection("anchor").document(AnchorDate).set(anchorFirebase);
 
     Anchor anchor =
         earth.createAnchor(
