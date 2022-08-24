@@ -86,6 +86,7 @@ public class CloudAnchorActivity extends AppCompatActivity
     RESOLVING,
   }
 
+
   // Rendering. The Renderers are created here, and initialized when the GL surface is created.
   private GLSurfaceView surfaceView;
   private final BackgroundRenderer backgroundRenderer = new BackgroundRenderer();

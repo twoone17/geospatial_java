@@ -28,6 +28,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.DialogFragment;
+
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.ArCoreApk;
 import com.google.ar.core.Camera;
@@ -59,9 +61,21 @@ import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException;
 import com.google.ar.core.exceptions.UnsupportedConfigurationException;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -89,6 +103,7 @@ public class GeospatialActivity extends AppCompatActivity
   // allow the user to place anchors.
   private static final double LOCALIZING_HORIZONTAL_ACCURACY_THRESHOLD_METERS = 10;
   private static final double LOCALIZING_HEADING_ACCURACY_THRESHOLD_DEGREES = 15;
+  private DatabaseReference mDatabase;
 
   // Once in the LOCALIZED state, if either accuracies degrade beyond these amounts, the app will
   // revert back to the LOCALIZING state.
@@ -432,6 +447,7 @@ public class GeospatialActivity extends AppCompatActivity
       messageSnackbarHelper.showError(this, "Camera not available. Try restarting the app.");
       return;
     }
+
     Camera camera = frame.getCamera();
 
     // BackgroundRenderer.updateDisplayGeometry must be called every frame to update the coordinates
@@ -461,11 +477,34 @@ public class GeospatialActivity extends AppCompatActivity
                  geospatialPose.getHeading(),
                  geospatialPose.getHeadingAccuracy());
 
-
         stroedLocationTextView.setText(storedGeolocation.toString());
         handleSetAnchorButton();
       }
     });
+
+  // Write a message to the database
+  //
+    FirebaseDatabase database = FirebaseDatabase.getInstance();
+    DatabaseReference myRef = database.getReference("message");
+
+    myRef.setValue("Hello, World!");
+
+//    // Read from the database
+//    myRef.addValueEventListener(new ValueEventListener() {
+//      @Override
+//      public void onDataChange(DataSnapshot dataSnapshot) {
+//        // This method is called once with the initial value and again
+//        // whenever data at this location is updated.
+//        String value = dataSnapshot.getValue(String.class);
+//        Log.d(TAG, "Value is: " + value);
+//      }
+//
+//      @Override
+//      public void onCancelled(DatabaseError error) {
+//        // Failed to read value
+//        Log.w(TAG, "Failed to read value.", error.toException());
+//      }
+//    });
 
 
     // Show a message based on whether tracking has failed, if planes are detected, and if the user
@@ -543,13 +582,40 @@ public class GeospatialActivity extends AppCompatActivity
 
     // Visualize anchors created by touch.
     render.clear(virtualSceneFramebuffer, 0f, 0f, 0f, 0f);
-    for (Anchor anchor : anchors) {
+    /**
+     * firebase에서 anchor를 받아오면 띄울수 있지 않을까?
+     */
+//    FirebaseFirestore db = FirebaseFirestore.getInstance();
+//    DocumentReference docRef = db.collection("anchor").document("anchor");
+//    docRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+//      @Override
+//      public void onSuccess(DocumentSnapshot documentSnapshot) {
+//        AnchorFirebase anchorFirebase = documentSnapshot.toObject(AnchorFirebase.class);
+//        Anchor anchor =
+//                earth.createAnchor(
+//                        anchorFirebase.getLatitude(),
+//                        anchorFirebase.getLongitude(),
+//                        anchorFirebase.getAltitude(),
+//                        0.0f,
+//                        (float) Math.sin(anchorFirebase.getAngleRadians()/ 2),
+//                        0.0f,
+//                        (float) Math.cos(anchorFirebase.getAngleRadians() / 2));
+//        anchors.add(anchor);
+//      }
+//    });
+//    List<Anchor> anchors = new ArrayList<>();
+
+    Iterator<Anchor> iterator = anchors.iterator();
+
+    for (Anchor anchor : anchors){
+//    while(iterator.hasNext()){
+//      Anchor anchor = iterator.next();
       // Get the current pose of an Anchor in world space. The Anchor pose is updated
       // during calls to session.update() as ARCore refines its estimate of the world.
       anchor.getPose().toMatrix(modelMatrix, 0);
 
       // Calculate model/view/projection matrices
-      Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0);
+        Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0);
       Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0);
 
       // Update shader properties and draw
@@ -708,6 +774,7 @@ public class GeospatialActivity extends AppCompatActivity
     if (clearedAnchorsAmount != null) {
       clearedAnchorsAmount = null;
     }
+    //firebase에 올리기
   }
 
   private void handleClearAnchorsButton() {
@@ -722,6 +789,10 @@ public class GeospatialActivity extends AppCompatActivity
       Earth earth, double latitude, double longitude, double altitude, double headingDegrees) {
     // Convert a heading to a EUS quaternion:
     double angleRadians = Math.toRadians(180.0f - headingDegrees);
+    FirebaseFirestore db = FirebaseFirestore.getInstance();
+    AnchorFirebase anchorFirebase = new AnchorFirebase(latitude,longitude,altitude,angleRadians);
+    db.collection("anchor").document("anchor").set(anchorFirebase);
+
     Anchor anchor =
         earth.createAnchor(
             latitude,
@@ -732,6 +803,8 @@ public class GeospatialActivity extends AppCompatActivity
             0.0f,
             (float) Math.cos(angleRadians / 2));
     anchors.add(anchor);
+
+
     if (anchors.size() > MAXIMUM_ANCHORS) {
       anchors.remove(0);
     }
