@@ -524,24 +524,6 @@ public class GeospatialActivity extends AppCompatActivity
 
     myRef.setValue("Hello, World!");
 
-//    // Read from the database
-//    myRef.addValueEventListener(new ValueEventListener() {
-//      @Override
-//      public void onDataChange(DataSnapshot dataSnapshot) {
-//        // This method is called once with the initial value and again
-//        // whenever data at this location is updated.
-//        String value = dataSnapshot.getValue(String.class);
-//        Log.d(TAG, "Value is: " + value);
-//      }
-//
-//      @Override
-//      public void onCancelled(DatabaseError error) {
-//        // Failed to read value
-//        Log.w(TAG, "Failed to read value.", error.toException());
-//      }
-//    });
-
-
     // Show a message based on whether tracking has failed, if planes are detected, and if the user
     // has placed any objects.
     String message = null;
@@ -617,10 +599,6 @@ public class GeospatialActivity extends AppCompatActivity
 
     // Visualize anchors created by touch.
     render.clear(virtualSceneFramebuffer, 0f, 0f, 0f, 0f);
-    /**
-     * firebase에서 anchor를 받아오면 띄울수 있지 않을까?
-     */
-
 
     Iterator<Anchor> iterator = anchors.iterator();
     System.out.println("anchors.size() = " + anchors.size());
