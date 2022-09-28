@@ -91,6 +91,7 @@ import java.util.concurrent.TimeUnit;
  * be created at the device's geospatial location. Anchor locations are persisted across sessions
  * and will be recreated once localized.
  */
+
 public class GeospatialActivity extends AppCompatActivity
     implements SampleRender.Renderer, NoticeDialogListener {
 
@@ -482,7 +483,7 @@ public class GeospatialActivity extends AppCompatActivity
                  geospatialPose.getHeading(),
                  geospatialPose.getHeadingAccuracy());
 
-        stroedLocationTextView.setText(storedGeolocation.toString());
+        stroedLocationTextView.setText("저장되었습니다 ! ");
         handleSetAnchorButton();
 
         //기존 저장한 앵커를 파이어베이스에서 불러온다
@@ -511,23 +512,7 @@ public class GeospatialActivity extends AppCompatActivity
 
                 });
 
-//        DocumentReference docRef = db.collection("anchor").document("anchor");
-//        docRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-//          @Override
-//          public void onSuccess(DocumentSnapshot documentSnapshot) {
-//            AnchorFirebase anchorFirebase = documentSnapshot.toObject(AnchorFirebase.class);
-//            Anchor anchor =
-//                    earth.createAnchor(
-//                            anchorFirebase.getLatitude(),
-//                            anchorFirebase.getLongitude(),
-//                            anchorFirebase.getAltitude(),
-//                            0.0f,
-//                            (float) Math.sin(anchorFirebase.getAngleRadians()/ 2),
-//                            0.0f,
-//                            (float) Math.cos(anchorFirebase.getAngleRadians() / 2));
-//            anchors.add(anchor);
-//          }
-//        });
+
 
       }
     });

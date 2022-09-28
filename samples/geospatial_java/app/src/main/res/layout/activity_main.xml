@@ -24,7 +24,7 @@
       android:id="@+id/surfaceview"
       android:layout_width="fill_parent"
       android:layout_height="fill_parent"
-      android:layout_gravity="top"/>
+      android:layout_gravity="top" />
 
   <TextView
       android:id="@+id/status_text_view"
@@ -46,18 +46,19 @@
       android:background="#bf323232"/>
 
   <Button
+      android:id="@+id/set_location"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:id="@+id/set_location"
-      android:text="Set location "/>
+      android:text="사진 촬영" />
 
   <TextView
       android:id="@+id/stored_location"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:text="저장된 위치"
       android:layout_alignParentRight="true"
-      android:textSize="30dp"/>
+      android:layout_marginRight="2dp"
+      android:text="저장된 위치"
+      android:textSize="30dp" />
 
   <Button
       android:id="@+id/set_anchor_button"
