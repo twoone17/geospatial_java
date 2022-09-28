@@ -698,7 +698,7 @@ public class GeospatialActivity extends AppCompatActivity
 
     updateGeospatialPoseText(geospatialPose);
   }
-
+//
   /**
    * Handles the updating for {@link State.LOCALIZED}. In this state, check the accuracy for
    * degradation and return to {@link State.LOCALIZING} if the position accuracies have dropped too
